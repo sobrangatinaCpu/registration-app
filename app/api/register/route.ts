@@ -1,12 +1,16 @@
-export async function POST(req: Request) {
-  const body = await req.json();
+   import { neon } from "@neondatabase/serverless";
 
-  if (!body.role || !body.fullName) {
-    return Response.json({ error: "Missing fields" }, { status: 400 });
-  }
+   export async function POST(req: Request) {
+     const body = await req.json();
+     const sql = neon(process.env.DATABASE_URL!);
 
-  // TODO: save to a database (see Step 8)
-  console.log("New registration:", body);
+     await sql`CREATE TABLE IF NOT EXISTS registrations (
+       id SERIAL PRIMARY KEY,
+       role TEXT, full_name TEXT, data JSONB,
+       created_at TIMESTAMP DEFAULT NOW()
+     )`;
+     await sql`INSERT INTO registrations (role, full_name, data)
+               VALUES (${body.role}, ${body.fullName}, ${JSON.stringify(body)})`;
 
-  return Response.json({ ok: true });
-}
+     return Response.json({ ok: true });
+   }
