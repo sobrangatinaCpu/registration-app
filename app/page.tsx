@@ -23,13 +23,12 @@ async function Registrations() {
     id: number;
     role: string;
     full_name: string;
-    student_id: string | null;
-    faculty_id: string | null;
+    data: Record<string, unknown> | null;
   }[] = [];
 
   try {
     rows = (await sql`
-      SELECT id, role, full_name, student_id, faculty_id
+      SELECT id, role, full_name, data
       FROM registrations
       ORDER BY created_at DESC
       LIMIT 20
@@ -39,7 +38,7 @@ async function Registrations() {
 
     return (
       <p className="text-red-600">
-        Could not load registrations. Check your database table and column names.
+        Could not load registrations. Check the server logs.
       </p>
     );
   }
@@ -57,12 +56,20 @@ async function Registrations() {
 
         <tbody>
           {rows.map((r) => {
+            const details = r.data ?? {};
+
             const displayId =
-              r.role === "faculty" ? r.faculty_id : r.student_id;
+              r.role === "faculty"
+                ? details.facultyId
+                : details.studentId;
 
             return (
               <tr key={r.id} className="border-t">
-                <td className="p-2">{displayId || "Not provided"}</td>
+                <td className="p-2">
+                  {typeof displayId === "string" && displayId.trim()
+                    ? displayId
+                    : "Not provided"}
+                </td>
                 <td className="p-2">{r.full_name}</td>
                 <td className="p-2 capitalize">{r.role}</td>
               </tr>
