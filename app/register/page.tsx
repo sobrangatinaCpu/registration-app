@@ -42,7 +42,7 @@ export default function Register() {
       setStep("form");
       return;
     }
-    router.push("/"); // "Yes" → back to Dashboard
+    router.push("/?registered=1");
   }
 
   // STEP 1: Student (Regular/Irregular) or Faculty?
