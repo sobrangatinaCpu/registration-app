@@ -1,14 +1,20 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { neon } from "@neondatabase/serverless";
 
-export const dynamic = "force-dynamic";
+type Params = Promise<{ registered?: string }>;
 
-export default async function Dashboard({
-  searchParams,
-}: {
-  searchParams: Promise<{ registered?: string }>;
-}) {
+async function Banner({ searchParams }: { searchParams: Params }) {
   const { registered } = await searchParams;
+  if (!registered) return null;
+  return (
+    <p className="rounded bg-green-100 p-3 text-green-800">
+      Registration successful!
+    </p>
+  );
+}
+
+async function Registrations() {
   const sql = neon(process.env.DATABASE_URL!);
 
   let rows: { id: number; role: string; full_name: string }[] = [];
@@ -22,14 +28,35 @@ export default async function Dashboard({
   }
 
   return (
+    <table className="w-full border text-left">
+      <thead className="bg-gray-100 text-black">
+        <tr>
+          <th className="p-2">#</th>
+          <th className="p-2">Name</th>
+          <th className="p-2">Role</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.id} className="border-t">
+            <td className="p-2">{r.id}</td>
+            <td className="p-2">{r.full_name}</td>
+            <td className="p-2 capitalize">{r.role}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+export default function Dashboard({ searchParams }: { searchParams: Params }) {
+  return (
     <main className="mx-auto max-w-2xl p-8 space-y-6">
       <h1 className="text-3xl font-bold">Dashboard</h1>
 
-      {registered && (
-        <p className="rounded bg-green-100 p-3 text-green-800">
-          Registration successful!
-        </p>
-      )}
+      <Suspense fallback={null}>
+        <Banner searchParams={searchParams} />
+      </Suspense>
 
       <Link
         href="/register"
@@ -38,24 +65,9 @@ export default async function Dashboard({
         Register
       </Link>
 
-      <table className="w-full border text-left">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="p-2">#</th>
-            <th className="p-2">Name</th>
-            <th className="p-2">Role</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.id} className="border-t">
-              <td className="p-2">{r.id}</td>
-              <td className="p-2">{r.full_name}</td>
-              <td className="p-2 capitalize">{r.role}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Suspense fallback={<p className="text-gray-500">Loading...</p>}>
+        <Registrations />
+      </Suspense>
     </main>
   );
 }
